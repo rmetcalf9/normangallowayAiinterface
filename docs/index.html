@@ -644,6 +644,7 @@ window.onload = function () {
 };
 
 function onGoogleSignIn(response) {
+  console.log('onGoogleSignIn', response);
   googleToken = response.credential;
   const payload = JSON.parse(atob(googleToken.split('.')[1]));
 
