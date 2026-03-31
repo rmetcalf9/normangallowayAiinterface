@@ -9,7 +9,7 @@ compatibility_date = "2025-01-01"
 [vars]
 OPENAI_MODEL = "gpt-4o"
 SYSTEM_PROMPT = "You are a helpful assistant. Be clear, accurate, and concise."
-ADMIN_EMAIL = "rmetcalf9@googlemail.com"
+ADMIN_EMAIL = "rmetcalf9@googlemail.com,terry@ngalloway.co.uk"
 
 [[kv_namespaces]]
 binding = "CHAT_KV"

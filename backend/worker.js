@@ -171,9 +171,14 @@ async function handleAdminSetKey(request, env, origin) {
   if (!tokenPayload)
     return jsonResponse({ error: 'Invalid or expired Google token.' }, 401, origin);
 
-  const adminEmail = (env.ADMIN_EMAIL || '').trim().toLowerCase();
-  if (!adminEmail || tokenPayload.email.toLowerCase() !== adminEmail)
+  const adminEmails = (env.ADMIN_EMAIL || '')
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(email => email); // remove empty strings
+
+  if (!adminEmails.includes(tokenPayload.email.toLowerCase())) {
     return jsonResponse({ error: 'Admin access only.' }, 403, origin);
+  }
 
   try {
     await env.CHAT_KV.put(KV_KEY, apiKey.trim());
@@ -199,9 +204,14 @@ async function handleAdminStatus(request, env, origin) {
   if (!tokenPayload)
     return jsonResponse({ error: 'Invalid or expired Google token.' }, 401, origin);
 
-  const adminEmail = (env.ADMIN_EMAIL || '').trim().toLowerCase();
-  if (!adminEmail || tokenPayload.email.toLowerCase() !== adminEmail)
+  const adminEmails = (env.ADMIN_EMAIL || '')
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(email => email); // remove empty strings
+
+  if (!adminEmails.includes(tokenPayload.email.toLowerCase())) {
     return jsonResponse({ error: 'Admin access only.' }, 403, origin);
+  }
 
   const kvKey = await env.CHAT_KV.get(KV_KEY);
 
@@ -227,9 +237,14 @@ async function handleAdminClearKey(request, env, origin) {
   if (!tokenPayload)
     return jsonResponse({ error: 'Invalid or expired Google token.' }, 401, origin);
 
-  const adminEmail = (env.ADMIN_EMAIL || '').trim().toLowerCase();
-  if (!adminEmail || tokenPayload.email.toLowerCase() !== adminEmail)
+  const adminEmails = (env.ADMIN_EMAIL || '')
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(email => email); // remove empty strings
+
+  if (!adminEmails.includes(tokenPayload.email.toLowerCase())) {
     return jsonResponse({ error: 'Admin access only.' }, 403, origin);
+  }
 
   await env.CHAT_KV.delete(KV_KEY);
   return jsonResponse({ success: true, message: 'KV key cleared. Falling back to default secret.' }, 200, origin);
