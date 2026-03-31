@@ -13,6 +13,7 @@
  */
 
  const KV_KEY = 'openai_key';
+ const KV_SYSTEM_PROMPT = 'system_prompt';
 
 function corsHeaders(origin) {
   return {
@@ -108,8 +109,8 @@ async function handleChat(request, env, origin) {
 
   // ── 3. Build OpenAI Responses API request ────────────────────────────────
   const openAIBody = {
-    model: env.OPENAI_MODEL || 'gpt-4o',
-    instructions: env.SYSTEM_PROMPT || 'You are a helpful assistant. Be clear and concise.',
+    model: env.OPENAI_MODEL || 'gpt-4o‑mini',
+    instructions: (await env.CHAT_KV.get(KV_SYSTEM_PROMPT)) || env.SYSTEM_PROMPT || 'You are a helpful assistant. Be clear and concise.',
     input: [{ role: 'user', content: message }],
     stream: true,
   };
@@ -214,11 +215,14 @@ async function handleAdminStatus(request, env, origin) {
   }
 
   const kvKey = await env.CHAT_KV.get(KV_KEY);
+  const kvSystemPrompt = await env.CHAT_KV.get(KV_SYSTEM_PROMPT);
 
   return jsonResponse({
     kvKeySet: !!kvKey,
     kvKeyPreview: kvKey ? `sk-...${kvKey.slice(-4)}` : null,
     fallbackConfigured: !!env.OPENAI_API_KEY,
+    systemPrompt: kvSystemPrompt || env.SYSTEM_PROMPT || null,
+    systemPromptSource: kvSystemPrompt ? 'kv' : (env.SYSTEM_PROMPT ? 'env' : 'default'),
   }, 200, origin);
 }
 
@@ -250,6 +254,37 @@ async function handleAdminClearKey(request, env, origin) {
   return jsonResponse({ success: true, message: 'KV key cleared. Falling back to default secret.' }, 200, origin);
 }
 
+/* ── Route: /api/admin/set-prompt ─────────────────────────────────────────── */
+
+async function handleAdminSetPrompt(request, env, origin) {
+  let body;
+  try { body = await request.json(); } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400, origin);
+  }
+
+  const { token, systemPrompt } = body;
+
+  if (!token) return jsonResponse({ error: 'Missing Google ID token' }, 401, origin);
+  if (typeof systemPrompt !== 'string' || !systemPrompt.trim())
+    return jsonResponse({ error: 'systemPrompt must be a non-empty string' }, 400, origin);
+
+  const tokenPayload = await verifyGoogleToken(token, env.GOOGLE_CLIENT_ID);
+  if (!tokenPayload)
+    return jsonResponse({ error: 'Invalid or expired Google token.' }, 401, origin);
+
+  const adminEmail = (env.ADMIN_EMAIL || '').trim().toLowerCase();
+  if (!adminEmail || tokenPayload.email.toLowerCase() !== adminEmail)
+    return jsonResponse({ error: 'Admin access only.' }, 403, origin);
+
+  try {
+    await env.CHAT_KV.put(KV_SYSTEM_PROMPT, systemPrompt.trim());
+  } catch (err) {
+    return jsonResponse({ error: `Failed to save prompt: ${err.message}` }, 500, origin);
+  }
+
+  return jsonResponse({ success: true, message: 'System prompt updated successfully.' }, 200, origin);
+}
+
 /* ── Main fetch handler ───────────────────────────────────────────────────── */
 
 export default {
@@ -267,6 +302,7 @@ export default {
       const path = new URL(request.url).pathname;
       if (path === '/api/chat')            return handleChat(request, env, origin);
       if (path === '/api/admin/set-key')   return handleAdminSetKey(request, env, origin);
+      if (path === '/api/admin/set-prompt') return handleAdminSetPrompt(request, env, origin);
       if (path === '/api/admin/status')    return handleAdminStatus(request, env, origin);
       if (path === '/api/admin/clear-key') return handleAdminClearKey(request, env, origin);
     }
