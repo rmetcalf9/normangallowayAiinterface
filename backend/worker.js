@@ -272,9 +272,14 @@ async function handleAdminSetPrompt(request, env, origin) {
   if (!tokenPayload)
     return jsonResponse({ error: 'Invalid or expired Google token.' }, 401, origin);
 
-  const adminEmail = (env.ADMIN_EMAIL || '').trim().toLowerCase();
-  if (!adminEmail || tokenPayload.email.toLowerCase() !== adminEmail)
+  const adminEmails = (env.ADMIN_EMAIL || '')
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(email => email); // remove empty strings
+
+  if (!adminEmails.includes(tokenPayload.email.toLowerCase())) {
     return jsonResponse({ error: 'Admin access only.' }, 403, origin);
+  }
 
   try {
     await env.CHAT_KV.put(KV_SYSTEM_PROMPT, systemPrompt.trim());
@@ -289,22 +294,26 @@ async function handleAdminSetPrompt(request, env, origin) {
 
 export default {
   async fetch(request, env) {
-    const origin = env.ALLOWED_ORIGIN || '*';
+    const allowedOrigins = (env.ALLOWED_ORIGIN || '*')
+      .split(',')
+      .map(o => o.trim()); // trim spaces
     const requestOrigin = request.headers.get('Origin') || '';
 
-    if (origin !== '*' && requestOrigin !== origin)
+    // Allow all origins if '*' is present
+    if (!allowedOrigins.includes('*') && !allowedOrigins.includes(requestOrigin)) {
       return new Response('Forbidden', { status: 403 });
+    }
 
     if (request.method === 'OPTIONS')
-      return new Response(null, { status: 204, headers: corsHeaders(origin) });
+      return new Response(null, { status: 204, headers: corsHeaders(requestOrigin) });
 
     if (request.method === 'POST') {
       const path = new URL(request.url).pathname;
-      if (path === '/api/chat')            return handleChat(request, env, origin);
-      if (path === '/api/admin/set-key')   return handleAdminSetKey(request, env, origin);
-      if (path === '/api/admin/set-prompt') return handleAdminSetPrompt(request, env, origin);
-      if (path === '/api/admin/status')    return handleAdminStatus(request, env, origin);
-      if (path === '/api/admin/clear-key') return handleAdminClearKey(request, env, origin);
+      if (path === '/api/chat')            return handleChat(request, env, requestOrigin);
+      if (path === '/api/admin/set-key')   return handleAdminSetKey(request, env, requestOrigin);
+      if (path === '/api/admin/set-prompt') return handleAdminSetPrompt(request, env, requestOrigin);
+      if (path === '/api/admin/status')    return handleAdminStatus(request, env, requestOrigin);
+      if (path === '/api/admin/clear-key') return handleAdminClearKey(request, env, requestOrigin);
     }
 
     return new Response('Not found', { status: 404 });
