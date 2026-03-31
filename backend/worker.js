@@ -6,6 +6,10 @@
  *   GOOGLE_CLIENT_ID   — your Google OAuth client ID
  *   ALLOWED_EMAILS     — comma-separated list, e.g. "alice@example.com,bob@example.com"
  *   ALLOWED_ORIGIN     — your GitHub Pages URL, e.g. "https://yourname.github.io"
+ *
+ * Optional vars (set in wrangler.toml [vars]):
+ *   OPENAI_MODEL       — defaults to "gpt-4o"
+ *   SYSTEM_PROMPT      — the assistant's system instructions
  */
 
 function corsHeaders(origin) {
@@ -91,14 +95,15 @@ async function handleChat(request, env, origin) {
 
   // ── 3. Build OpenAI Responses API request ────────────────────────────────
   const openAIBody = {
-    agent_id: env.OPENAI_AGENT_ID,
-    input: message ,
+    model: env.OPENAI_MODEL || 'gpt-4o',
+    instructions: env.SYSTEM_PROMPT || 'You are a helpful assistant. Be clear and concise.',
+    input: [{ role: 'user', content: message }],
     stream: true,
   };
 
   // If this is a follow-up message in an existing conversation, link to the previous response
   if (previousResponseId && typeof previousResponseId === 'string') {
-    openAIBody.session = previousResponseId || crypto.randomUUID();
+    openAIBody.previous_response_id = previousResponseId;
   }
 
   // ── 4. Call OpenAI and stream the response back ──────────────────────────
