@@ -448,39 +448,6 @@
 
     .divider { border: none; border-top: 1px solid var(--border); }
 
-    .text-area {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      font-family: var(--font);
-      font-size: .875rem;
-      color: var(--text);
-      background: var(--bg);
-      outline: none;
-      resize: vertical;
-      min-height: 120px;
-      line-height: 1.6;
-      transition: border-color .15s, box-shadow .15s;
-    }
-    .text-area:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(29,78,216,.1);
-      background: var(--surface);
-    }
-    .prompt-source {
-      display: inline-block;
-      font-size: .72rem;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 999px;
-      margin-left: 8px;
-      vertical-align: middle;
-    }
-    .prompt-source.kv  { background: var(--success-bg); color: var(--success); }
-    .prompt-source.env { background: var(--warning-bg); color: var(--warning); }
-    .prompt-source.default { background: var(--bg); color: var(--text-soft); border: 1px solid var(--border); }
-
     /* ── Animations ─────────────────────────────────────────────────────────── */
     @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
@@ -637,37 +604,6 @@
         </div>
       </div>
 
-      <!-- System prompt card -->
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <h3>System prompt
-              <span class="prompt-source default" id="prompt-source-badge">loading</span>
-            </h3>
-            <p>Instructions sent to the model at the start of every conversation</p>
-          </div>
-        </div>
-        <div class="card-body">
-          <div>
-            <label class="field-label" for="system-prompt-input">Prompt</label>
-            <textarea
-              class="text-area"
-              id="system-prompt-input"
-              placeholder="You are a helpful assistant. Be clear and concise."
-              spellcheck="true"
-            ></textarea>
-            <p class="field-hint">
-              Saved to KV — takes effect immediately for all new conversations.
-              Overrides the <code>SYSTEM_PROMPT</code> env var in wrangler.toml.
-            </p>
-          </div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <button class="btn-primary" id="save-prompt-btn" onclick="savePrompt()">Save prompt</button>
-          </div>
-          <div class="alert" id="prompt-alert"></div>
-        </div>
-      </div>
-
     </div>
   </div>
 
@@ -708,10 +644,16 @@ window.onload = function () {
 };
 
 function onGoogleSignIn(response) {
+  console.log('onGoogleSignIn', response);
   googleToken = response.credential;
   const payload = JSON.parse(atob(googleToken.split('.')[1]));
 
-  isAdmin = payload.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+  const adminEmails = (ADMIN_EMAIL || '')
+    .split(',')
+    .map(email => email.trim().toLowerCase())
+    .filter(email => email); // remove empty strings
+
+  const isAdmin = adminEmails.includes(payload.email.toLowerCase());
 
   document.getElementById('user-email').textContent = payload.email;
   document.getElementById('login-screen').style.display = 'none';
@@ -809,14 +751,6 @@ async function loadAdminStatus() {
         ${!data.fallbackConfigured ? '<div class="alert warning show">Warning: no API key is configured at all. Users will see an error when trying to chat.</div>' : ''}
       `;
     }
-
-    // Populate system prompt textarea and source badge
-    const promptInput = document.getElementById('system-prompt-input');
-    const badge       = document.getElementById('prompt-source-badge');
-    if (data.systemPrompt) promptInput.value = data.systemPrompt;
-    const sourceLabels = { kv: 'KV — live', env: 'env var', default: 'default' };
-    badge.textContent = sourceLabels[data.systemPromptSource] || data.systemPromptSource;
-    badge.className   = `prompt-source ${data.systemPromptSource}`;
   } catch (err) {
     pill.className = 'status-pill inactive';
     pill.innerHTML = '<span class="dot"></span> Error';
@@ -897,49 +831,7 @@ async function clearKey() {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   ADMIN: SAVE SYSTEM PROMPT
-   ═══════════════════════════════════════════════════════════════════════════ */
-async function savePrompt() {
-  const input  = document.getElementById('system-prompt-input');
-  const btn    = document.getElementById('save-prompt-btn');
-  const alert  = document.getElementById('prompt-alert');
-  const prompt = input.value.trim();
-
-  hideAlert(alert);
-
-  if (!prompt) {
-    showAlert(alert, 'error', 'Prompt cannot be empty.');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.textContent = 'Saving…';
-
-  try {
-    const res = await fetch(`${WORKER_URL}/api/admin/set-prompt`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token: googleToken, systemPrompt: prompt }),
-    });
-    const data = await res.json();
-
-    if (!res.ok) throw new Error(data.error || 'Failed to save prompt');
-
-    showAlert(alert, 'success', 'System prompt saved. Takes effect for all new conversations immediately.');
-    // Update the source badge to reflect it's now stored in KV
-    const badge = document.getElementById('prompt-source-badge');
-    badge.textContent = 'KV — live';
-    badge.className = 'prompt-source kv';
-  } catch (err) {
-    showAlert(alert, 'error', err.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Save prompt';
-  }
-}
-
-
+function showAlert(el, type, msg) {
   el.className = `alert ${type} show`;
   el.textContent = msg;
 }
@@ -950,13 +842,8 @@ function hideAlert(el) {
 
 function resetAdminPanel() {
   document.getElementById('api-key-input').value = '';
-  document.getElementById('system-prompt-input').value = '';
   hideAlert(document.getElementById('save-alert'));
   hideAlert(document.getElementById('clear-alert'));
-  hideAlert(document.getElementById('prompt-alert'));
-  const badge = document.getElementById('prompt-source-badge');
-  badge.textContent = 'loading';
-  badge.className = 'prompt-source default';
   document.getElementById('status-pill').className = 'status-pill loading';
   document.getElementById('status-pill').innerHTML = '<span class="dot"></span> Checking…';
   document.getElementById('status-body').innerHTML = '<p style="font-size:.85rem;color:var(--text-soft)">Loading status…</p>';
