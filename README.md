@@ -13,7 +13,7 @@ cd backend
 wrangler login
 wrangler deploy
 
-TODO wrangler secret put OPENAI_API_KEY
+wrangler secret put OPENAI_API_KEY
 wrangler secret put GOOGLE_CLIENT_ID
 
 Comma-separated list of allowed email addresses
@@ -23,8 +23,8 @@ Myvalues:
 rmetcalf9@googlemail.com,terry@ngalloway.co.uk
 
 
+wrangler secret put ALLOWED_ORIGIN
 
-TODO wrangler secret put ALLOWED_ORIGIN
-
+wrangler kv namespace create CHAT_KV
 
 wrangler deploy

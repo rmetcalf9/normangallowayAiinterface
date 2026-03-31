@@ -9,3 +9,14 @@ compatibility_date = "2025-01-01"
 [vars]
 OPENAI_MODEL = "gpt-4o"
 SYSTEM_PROMPT = "You are a helpful assistant. Be clear, accurate, and concise."
+
+[[kv_namespaces]]
+binding = "CHAT_KV"
+id = "a6d52d8b993942d1b3e0a3d355adefb2"
+
+# Secrets — set these via `wrangler secret put`, never put values here:
+#   OPENAI_API_KEY   (fallback key — used if admin hasn't set one via the UI)
+#   GOOGLE_CLIENT_ID
+#   ALLOWED_EMAILS
+#   ALLOWED_ORIGIN
+#   ADMIN_EMAIL

@@ -5,15 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Assistant</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap"
-    rel="stylesheet"
-  />
-  <!-- Google Identity Services -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script src="https://accounts.google.com/gsi/client" async></script>
-
   <style>
-    /* ── Reset & base ─────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -24,11 +18,18 @@
       --text-soft:   #6b7280;
       --accent:      #1d4ed8;
       --accent-hover:#1e40af;
+      --accent-light:#eff6ff;
       --user-bubble: #1d4ed8;
       --user-text:   #ffffff;
-      --ai-bubble:   #ffffff;
-      --ai-text:     #111827;
       --danger:      #dc2626;
+      --danger-bg:   #fef2f2;
+      --danger-border:#fecaca;
+      --success:     #16a34a;
+      --success-bg:  #f0fdf4;
+      --success-border:#bbf7d0;
+      --warning:     #d97706;
+      --warning-bg:  #fffbeb;
+      --warning-border:#fde68a;
       --shadow:      0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
       --shadow-md:   0 4px 6px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.05);
       --radius:      12px;
@@ -45,7 +46,7 @@
       overflow: hidden;
     }
 
-    /* ── Login screen ─────────────────────────────────────────────────────── */
+    /* ── Login ─────────────────────────────────────────────────────────────── */
     #login-screen {
       flex: 1;
       display: flex;
@@ -54,7 +55,6 @@
       padding: 24px;
       animation: fadeIn .4s ease;
     }
-
     .login-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -68,47 +68,19 @@
       align-items: center;
       gap: 24px;
     }
-
     .login-icon {
-      width: 52px;
-      height: 52px;
+      width: 52px; height: 52px;
       background: var(--accent);
       border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
     }
     .login-icon svg { width: 26px; height: 26px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .login-card h1 { font-size: 1.375rem; font-weight: 600; letter-spacing: -.02em; text-align: center; }
+    .login-card p  { font-size: .875rem; color: var(--text-soft); text-align: center; line-height: 1.6; }
+    .login-note    { font-size: .75rem; color: var(--text-soft); text-align: center; }
 
-    .login-card h1 {
-      font-size: 1.375rem;
-      font-weight: 600;
-      letter-spacing: -.02em;
-      text-align: center;
-      color: var(--text);
-    }
-    .login-card p {
-      font-size: .875rem;
-      color: var(--text-soft);
-      text-align: center;
-      line-height: 1.6;
-    }
-
-    #google-signin-btn { width: 100%; }
-
-    .login-note {
-      font-size: .75rem;
-      color: var(--text-soft);
-      text-align: center;
-    }
-
-    /* ── App shell (shown after login) ───────────────────────────────────── */
-    #app-screen {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
+    /* ── App shell ─────────────────────────────────────────────────────────── */
+    #app-screen { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
     #app-screen[hidden] { display: none; }
 
     /* Header */
@@ -117,46 +89,59 @@
       border-bottom: 1px solid var(--border);
       padding: 0 24px;
       height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       flex-shrink: 0;
     }
-
-    .header-left {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
     .header-icon {
-      width: 32px;
-      height: 32px;
+      width: 32px; height: 32px;
       background: var(--accent);
       border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
     }
     .header-icon svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    header h1 { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
+    .header-right { display: flex; align-items: center; gap: 8px; }
+    #user-email { font-size: .8rem; color: var(--text-soft); font-weight: 500; }
 
-    header h1 {
-      font-size: 1rem;
-      font-weight: 600;
-      letter-spacing: -.01em;
+    /* Tabs (chat / admin) */
+    .tab-bar {
+      display: flex; align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      padding: 0 24px;
+      gap: 0;
+      flex-shrink: 0;
     }
-
-    .header-right {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    #user-email {
-      font-size: .8rem;
-      color: var(--text-soft);
+    .tab {
+      padding: 10px 18px;
+      font-family: var(--font);
+      font-size: .85rem;
       font-weight: 500;
+      color: var(--text-soft);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: color .15s, border-color .15s;
+      margin-bottom: -1px;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-badge {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-size: .65rem;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 1px 6px;
+      margin-left: 6px;
+      vertical-align: middle;
+      line-height: 1.5;
     }
 
+    /* Buttons */
     .btn-ghost {
       background: none;
       border: 1px solid var(--border);
@@ -171,7 +156,39 @@
     }
     .btn-ghost:hover { background: var(--bg); color: var(--text); }
 
-    /* Chat area */
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 9px 18px;
+      font-family: var(--font);
+      font-size: .875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, opacity .15s;
+    }
+    .btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+    .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
+
+    .btn-danger {
+      background: none;
+      border: 1px solid var(--danger-border);
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-family: var(--font);
+      font-size: .8rem;
+      font-weight: 500;
+      color: var(--danger);
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-danger:hover { background: var(--danger-bg); }
+
+    /* ── Chat panel ────────────────────────────────────────────────────────── */
+    #chat-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #chat-panel[hidden] { display: none; }
+
     #messages {
       flex: 1;
       overflow-y: auto;
@@ -182,7 +199,6 @@
       scroll-behavior: smooth;
     }
 
-    /* Empty state */
     #empty-state {
       flex: 1;
       display: flex;
@@ -196,33 +212,22 @@
       text-align: center;
     }
     #empty-state svg { opacity: .25; width: 40px; height: 40px; stroke: var(--text-soft); fill: none; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
-    #empty-state p { font-size: .9rem; font-weight: 500; }
+    #empty-state p   { font-size: .9rem; font-weight: 500; }
     #empty-state span { font-size: .8rem; opacity: .7; }
 
-    /* Message bubbles */
-    .msg {
-      display: flex;
-      gap: 10px;
-      max-width: 720px;
-      width: 100%;
-      animation: slideUp .2s ease;
-    }
-    .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+    .msg { display: flex; gap: 10px; max-width: 720px; width: 100%; animation: slideUp .2s ease; }
+    .msg.user      { align-self: flex-end; flex-direction: row-reverse; }
     .msg.assistant { align-self: flex-start; }
 
     .avatar {
-      width: 30px;
-      height: 30px;
+      width: 30px; height: 30px;
       border-radius: 8px;
       flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: .7rem;
-      font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .7rem; font-weight: 600;
       margin-top: 2px;
     }
-    .msg.user .avatar { background: var(--user-bubble); color: #fff; }
+    .msg.user .avatar      { background: var(--user-bubble); color: #fff; }
     .msg.assistant .avatar { background: #e5e7eb; color: var(--text-soft); }
     .msg.assistant .avatar svg { width: 14px; height: 14px; stroke: var(--text-soft); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 
@@ -232,6 +237,7 @@
       font-size: .9rem;
       line-height: 1.65;
       max-width: calc(100% - 44px);
+      white-space: pre-wrap;
     }
     .msg.user .bubble {
       background: var(--user-bubble);
@@ -239,23 +245,16 @@
       border-bottom-right-radius: 4px;
     }
     .msg.assistant .bubble {
-      background: var(--ai-bubble);
-      color: var(--ai-text);
+      background: var(--surface);
+      color: var(--text);
       border: 1px solid var(--border);
       border-bottom-left-radius: 4px;
       box-shadow: var(--shadow);
     }
 
-    /* Typing indicator */
-    .typing-dots {
-      display: flex;
-      gap: 4px;
-      padding: 4px 0;
-      align-items: center;
-    }
+    .typing-dots { display: flex; gap: 4px; padding: 4px 0; align-items: center; }
     .typing-dots span {
-      width: 6px;
-      height: 6px;
+      width: 6px; height: 6px;
       background: var(--text-soft);
       border-radius: 50%;
       animation: bounce .9s infinite;
@@ -263,11 +262,10 @@
     .typing-dots span:nth-child(2) { animation-delay: .15s; }
     .typing-dots span:nth-child(3) { animation-delay: .3s; }
 
-    /* Error messages */
     .error-msg {
       align-self: center;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
+      background: var(--danger-bg);
+      border: 1px solid var(--danger-border);
       border-radius: 10px;
       color: var(--danger);
       font-size: .825rem;
@@ -276,14 +274,12 @@
       text-align: center;
     }
 
-    /* Input bar */
     #input-bar {
       background: var(--surface);
       border-top: 1px solid var(--border);
       padding: 16px;
       flex-shrink: 0;
     }
-
     .input-wrapper {
       max-width: 720px;
       margin: 0 auto;
@@ -300,7 +296,6 @@
       border-color: var(--accent);
       box-shadow: 0 0 0 3px rgba(29,78,216,.1);
     }
-
     #message-input {
       flex: 1;
       background: none;
@@ -315,17 +310,12 @@
       padding: 4px 0;
     }
     #message-input::placeholder { color: var(--text-soft); }
-
     #send-btn {
-      width: 38px;
-      height: 38px;
+      width: 38px; height: 38px;
       background: var(--accent);
-      border: none;
-      border-radius: 10px;
+      border: none; border-radius: 10px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       flex-shrink: 0;
       transition: background .15s, transform .1s;
     }
@@ -333,58 +323,168 @@
     #send-btn:active:not(:disabled) { transform: scale(.94); }
     #send-btn:disabled { opacity: .45; cursor: not-allowed; }
     #send-btn svg { width: 16px; height: 16px; stroke: #fff; fill: none; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+    .input-hint { text-align: center; font-size: .72rem; color: var(--text-soft); margin-top: 8px; opacity: .7; }
 
-    .input-hint {
-      text-align: center;
-      font-size: .72rem;
-      color: var(--text-soft);
-      margin-top: 8px;
-      opacity: .7;
+    /* ── Admin panel ───────────────────────────────────────────────────────── */
+    #admin-panel {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 24px;
+    }
+    #admin-panel[hidden] { display: none; }
+
+    .admin-inner {
+      max-width: 560px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
     }
 
-    /* ── Animations ───────────────────────────────────────────────────────── */
-    @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+    .admin-inner h2 {
+      font-size: 1.125rem;
+      font-weight: 600;
+      letter-spacing: -.02em;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .card-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .card-header h3 { font-size: .95rem; font-weight: 600; }
+    .card-header p  { font-size: .8rem; color: var(--text-soft); margin-top: 2px; }
+    .card-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* Status pill */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .status-pill .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .status-pill.active   { background: var(--success-bg); color: var(--success); }
+    .status-pill.active .dot { background: var(--success); }
+    .status-pill.inactive { background: var(--warning-bg); color: var(--warning); }
+    .status-pill.inactive .dot { background: var(--warning); }
+    .status-pill.loading  { background: var(--bg); color: var(--text-soft); }
+    .status-pill.loading .dot { background: var(--text-soft); }
+
+    .field-label { font-size: .8rem; font-weight: 500; color: var(--text-soft); margin-bottom: 6px; display: block; }
+    .field-hint  { font-size: .75rem; color: var(--text-soft); margin-top: 6px; }
+
+    .text-input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: .9rem;
+      color: var(--text);
+      background: var(--bg);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+      letter-spacing: .05em;
+    }
+    .text-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(29,78,216,.1);
+      background: var(--surface);
+    }
+
+    .form-row { display: flex; gap: 10px; align-items: flex-end; }
+    .form-row .text-input { flex: 1; }
+
+    .info-box {
+      background: var(--accent-light);
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: .82rem;
+      color: #1e40af;
+      line-height: 1.55;
+    }
+
+    .alert {
+      border-radius: 8px;
+      padding: 11px 14px;
+      font-size: .82rem;
+      line-height: 1.5;
+      display: none;
+    }
+    .alert.show { display: block; }
+    .alert.success { background: var(--success-bg); border: 1px solid var(--success-border); color: var(--success); }
+    .alert.error   { background: var(--danger-bg);  border: 1px solid var(--danger-border);  color: var(--danger); }
+    .alert.warning { background: var(--warning-bg); border: 1px solid var(--warning-border); color: var(--warning); }
+
+    .key-preview {
+      font-family: monospace;
+      font-size: .82rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 10px;
+      color: var(--text-soft);
+      letter-spacing: .05em;
+    }
+
+    .divider { border: none; border-top: 1px solid var(--border); }
+
+    /* ── Animations ─────────────────────────────────────────────────────────── */
+    @keyframes fadeIn  { from { opacity: 0 } to { opacity: 1 } }
     @keyframes slideUp { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
-    @keyframes bounce {
+    @keyframes bounce  {
       0%, 60%, 100% { transform: translateY(0) }
       30% { transform: translateY(-6px) }
     }
 
-    /* ── Responsive ───────────────────────────────────────────────────────── */
     @media (max-width: 600px) {
       .login-card { padding: 36px 24px; }
       #user-email { display: none; }
-      header { padding: 0 16px; }
-      #messages { padding: 16px 12px; }
+      header, .tab-bar { padding: 0 16px; }
+      #messages, #admin-panel { padding: 16px 12px; }
     }
   </style>
 </head>
 <body>
 
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--  LOGIN SCREEN                                                          -->
+<!--  LOGIN                                                                  -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div id="login-screen">
   <div class="login-card">
-
     <div class="login-icon">
       <svg viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
     </div>
-
     <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
       <h1>AI Assistant</h1>
       <p>Sign in with your Google account to access the assistant.</p>
     </div>
-
-    <!-- Google renders its button here -->
     <div id="google-signin-btn"></div>
-
     <p class="login-note">Access is restricted to authorised accounts only.</p>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
-<!--  CHAT APP                                                               -->
+<!--  APP                                                                    -->
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div id="app-screen" hidden>
 
@@ -401,45 +501,130 @@
     </div>
   </header>
 
-  <div id="messages">
-    <div id="empty-state">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <p>How can I help you today?</p>
-      <span>Type a message below to get started.</span>
+  <!-- Tabs — admin tab only shown for admin user -->
+  <div class="tab-bar">
+    <button class="tab active" id="tab-chat" onclick="switchTab('chat')">Chat</button>
+    <button class="tab" id="tab-admin" onclick="switchTab('admin')" hidden>
+      Admin <span class="tab-badge">KEY</span>
+    </button>
+  </div>
+
+  <!-- Chat panel -->
+  <div id="chat-panel">
+    <div id="messages">
+      <div id="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <p>How can I help you today?</p>
+        <span>Type a message below to get started.</span>
+      </div>
+    </div>
+
+    <div id="input-bar">
+      <div class="input-wrapper">
+        <textarea id="message-input" placeholder="Message the assistant…" rows="1" autocomplete="off" spellcheck="true"></textarea>
+        <button id="send-btn" onclick="sendMessage()" disabled title="Send message">
+          <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+      <p class="input-hint">Enter to send &nbsp;·&nbsp; Shift+Enter for new line</p>
     </div>
   </div>
 
-  <div id="input-bar">
-    <div class="input-wrapper">
-      <textarea
-        id="message-input"
-        placeholder="Message the assistant…"
-        rows="1"
-        autocomplete="off"
-        spellcheck="true"
-      ></textarea>
-      <button id="send-btn" onclick="sendMessage()" disabled title="Send message">
-        <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-      </button>
+  <!-- Admin panel (hidden until tab switched) -->
+  <div id="admin-panel" hidden>
+    <div class="admin-inner">
+
+      <h2>API Key Management</h2>
+
+      <!-- Current status card -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Active key status</h3>
+            <p>The key used by all users for OpenAI requests</p>
+          </div>
+          <span class="status-pill loading" id="status-pill">
+            <span class="dot"></span> Checking…
+          </span>
+        </div>
+        <div class="card-body" id="status-body">
+          <p style="font-size:.85rem;color:var(--text-soft)">Loading status…</p>
+        </div>
+      </div>
+
+      <!-- Set new key card -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Set a new OpenAI key</h3>
+            <p>Replaces the active key immediately for all users</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="info-box">
+            The key is sent directly to the Cloudflare Worker and stored server-side in KV. It is never visible in the browser after submission.
+          </div>
+
+          <div>
+            <label class="field-label" for="api-key-input">OpenAI API key</label>
+            <div class="form-row">
+              <input
+                class="text-input"
+                type="password"
+                id="api-key-input"
+                placeholder="sk-…"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <button class="btn-primary" id="save-key-btn" onclick="saveKey()">Save key</button>
+            </div>
+            <p class="field-hint">Must start with <code>sk-</code>. Get your key from platform.openai.com.</p>
+          </div>
+
+          <div class="alert" id="save-alert"></div>
+        </div>
+      </div>
+
+      <!-- Fallback / clear card -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <h3>Fallback key</h3>
+            <p>Hardcoded via wrangler secret — used if no KV key is set</p>
+          </div>
+        </div>
+        <div class="card-body">
+          <p style="font-size:.85rem;line-height:1.6;color:var(--text-soft)">
+            If you clear the KV key below, the Worker falls back to the <code>OPENAI_API_KEY</code> wrangler secret you set during initial setup. Useful for testing a new key before fully committing.
+          </p>
+          <div>
+            <button class="btn-danger" id="clear-key-btn" onclick="clearKey()">Clear KV key &amp; use fallback</button>
+          </div>
+          <div class="alert" id="clear-alert"></div>
+        </div>
+      </div>
+
     </div>
-    <p class="input-hint">Press Enter to send &nbsp;·&nbsp; Shift+Enter for new line</p>
   </div>
 
-</div>
+</div><!-- #app-screen -->
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════
-   CONFIGURATION — update these two values before deploying
+   CONFIGURATION — update before deploying
    ═══════════════════════════════════════════════════════════════════════════ */
-const GOOGLE_CLIENT_ID = '900022008011-mj99tvle3egksvuf37du7i3dmtq0br5p.apps.googleusercontent.com';
-const WORKER_URL       = 'https://openai-chat-proxy.metcarob.workers.dev';
+const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
+const WORKER_URL       = 'https://your-worker-name.your-subdomain.workers.dev';
+const ADMIN_EMAIL      = 'admin@yourdomain.com'; // Must match ADMIN_EMAIL wrangler secret
 
 /* ═══════════════════════════════════════════════════════════════════════════
    STATE
    ═══════════════════════════════════════════════════════════════════════════ */
-let googleToken       = null;   // Google ID token (refreshed automatically)
-let previousResponseId = null;  // OpenAI response ID for conversation continuity
+let googleToken        = null;
+let previousResponseId = null;
 let isStreaming        = false;
+let isAdmin            = false;
+let currentTab         = 'chat';
 
 /* ═══════════════════════════════════════════════════════════════════════════
    GOOGLE SIGN-IN
@@ -448,33 +633,34 @@ window.onload = function () {
   google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
     callback: onGoogleSignIn,
-    auto_select: true,          // silently re-authenticates returning users
+    auto_select: true,
     cancel_on_tap_outside: false,
   });
 
   google.accounts.id.renderButton(
     document.getElementById('google-signin-btn'),
-    {
-      type:  'standard',
-      theme: 'outline',
-      size:  'large',
-      text:  'signin_with',
-      shape: 'rectangular',
-      width: 300,
-    }
+    { type: 'standard', theme: 'outline', size: 'large', text: 'signin_with', shape: 'rectangular', width: 300 }
   );
 };
 
 function onGoogleSignIn(response) {
   googleToken = response.credential;
-
-  // Decode the JWT payload to get the email (client-side preview only;
-  // the Worker re-validates the token properly).
   const payload = JSON.parse(atob(googleToken.split('.')[1]));
 
+  isAdmin = payload.email.toLowerCase() === ADMIN_EMAIL.toLowerCase();
+
   document.getElementById('user-email').textContent = payload.email;
-  document.getElementById('login-screen').style.display  = 'none';
+  document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app-screen').removeAttribute('hidden');
+
+  // Show admin tab if applicable
+  const adminTab = document.getElementById('tab-admin');
+  if (isAdmin) {
+    adminTab.removeAttribute('hidden');
+  } else {
+    adminTab.setAttribute('hidden', '');
+  }
+
   document.getElementById('message-input').focus();
 }
 
@@ -482,28 +668,183 @@ function signOut() {
   google.accounts.id.disableAutoSelect();
   googleToken        = null;
   previousResponseId = null;
+  isAdmin            = false;
 
-  // Clear messages
+  // Reset chat
   const msgs = document.getElementById('messages');
   msgs.innerHTML = '';
   msgs.appendChild(buildEmptyState());
+
+  // Reset admin panel
+  resetAdminPanel();
+
+  // Reset tabs
+  switchTab('chat');
+  document.getElementById('tab-admin').setAttribute('hidden', '');
 
   document.getElementById('app-screen').setAttribute('hidden', '');
   document.getElementById('login-screen').style.display = 'flex';
 }
 
-function buildEmptyState() {
-  const div = document.createElement('div');
-  div.id = 'empty-state';
-  div.innerHTML = `
-    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-    <p>How can I help you today?</p>
-    <span>Type a message below to get started.</span>`;
-  return div;
+/* ═══════════════════════════════════════════════════════════════════════════
+   TAB SWITCHING
+   ═══════════════════════════════════════════════════════════════════════════ */
+function switchTab(tab) {
+  currentTab = tab;
+
+  document.getElementById('tab-chat').classList.toggle('active', tab === 'chat');
+  document.getElementById('tab-admin').classList.toggle('active', tab === 'admin');
+
+  document.getElementById('chat-panel').hidden   = (tab !== 'chat');
+  document.getElementById('admin-panel').hidden  = (tab !== 'admin');
+
+  if (tab === 'admin') loadAdminStatus();
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   TEXTAREA — auto-resize & keyboard shortcut
+   ADMIN: STATUS
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function loadAdminStatus() {
+  const pill = document.getElementById('status-pill');
+  const body = document.getElementById('status-body');
+
+  pill.className = 'status-pill loading';
+  pill.innerHTML = '<span class="dot"></span> Checking…';
+  body.innerHTML = '<p style="font-size:.85rem;color:var(--text-soft)">Loading…</p>';
+
+  try {
+    const res = await fetch(`${WORKER_URL}/api/admin/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: googleToken }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Failed to load status');
+
+    if (data.kvKeySet) {
+      pill.className = 'status-pill active';
+      pill.innerHTML = '<span class="dot"></span> KV key active';
+      body.innerHTML = `
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div>
+            <span class="field-label" style="margin-bottom:4px">Key in use</span>
+            <span class="key-preview">${data.kvKeyPreview}</span>
+          </div>
+        </div>
+        <p style="font-size:.82rem;color:var(--text-soft)">Set via admin panel. Overrides the fallback secret.</p>
+      `;
+    } else {
+      pill.className = 'status-pill inactive';
+      pill.innerHTML = '<span class="dot"></span> Using fallback';
+      body.innerHTML = `
+        <p style="font-size:.85rem;color:var(--text-soft)">
+          No KV key is set. The Worker is using the
+          <code>OPENAI_API_KEY</code> wrangler secret${data.fallbackConfigured ? '' : ' — <strong>which also appears to be missing</strong>'}.
+        </p>
+        ${!data.fallbackConfigured ? '<div class="alert warning show">Warning: no API key is configured at all. Users will see an error when trying to chat.</div>' : ''}
+      `;
+    }
+  } catch (err) {
+    pill.className = 'status-pill inactive';
+    pill.innerHTML = '<span class="dot"></span> Error';
+    body.innerHTML = `<div class="alert error show">${err.message}</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN: SAVE KEY
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function saveKey() {
+  const input   = document.getElementById('api-key-input');
+  const btn     = document.getElementById('save-key-btn');
+  const alert   = document.getElementById('save-alert');
+  const keyVal  = input.value.trim();
+
+  hideAlert(alert);
+
+  if (!keyVal.startsWith('sk-')) {
+    showAlert(alert, 'error', 'API key must start with sk-');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+
+  try {
+    const res = await fetch(`${WORKER_URL}/api/admin/set-key`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: googleToken, apiKey: keyVal }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Failed to save key');
+
+    input.value = '';
+    showAlert(alert, 'success', 'API key saved successfully. All users will now use this key.');
+    loadAdminStatus(); // Refresh status card
+  } catch (err) {
+    showAlert(alert, 'error', err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Save key';
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ADMIN: CLEAR KEY
+   ═══════════════════════════════════════════════════════════════════════════ */
+async function clearKey() {
+  const btn   = document.getElementById('clear-key-btn');
+  const alert = document.getElementById('clear-alert');
+
+  if (!confirm('Clear the KV key? The Worker will fall back to the wrangler secret.')) return;
+
+  hideAlert(alert);
+  btn.disabled = true;
+  btn.textContent = 'Clearing…';
+
+  try {
+    const res = await fetch(`${WORKER_URL}/api/admin/clear-key`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: googleToken }),
+    });
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data.error || 'Failed to clear key');
+
+    showAlert(alert, 'success', 'KV key cleared. Falling back to wrangler secret.');
+    loadAdminStatus();
+  } catch (err) {
+    showAlert(alert, 'error', err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Clear KV key & use fallback';
+  }
+}
+
+function showAlert(el, type, msg) {
+  el.className = `alert ${type} show`;
+  el.textContent = msg;
+}
+function hideAlert(el) {
+  el.className = 'alert';
+  el.textContent = '';
+}
+
+function resetAdminPanel() {
+  document.getElementById('api-key-input').value = '';
+  hideAlert(document.getElementById('save-alert'));
+  hideAlert(document.getElementById('clear-alert'));
+  document.getElementById('status-pill').className = 'status-pill loading';
+  document.getElementById('status-pill').innerHTML = '<span class="dot"></span> Checking…';
+  document.getElementById('status-body').innerHTML = '<p style="font-size:.85rem;color:var(--text-soft)">Loading status…</p>';
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHAT: TEXTAREA
    ═══════════════════════════════════════════════════════════════════════════ */
 const textarea = document.getElementById('message-input');
 const sendBtn  = document.getElementById('send-btn');
@@ -522,46 +863,35 @@ textarea.addEventListener('keydown', (e) => {
 });
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SEND MESSAGE
+   CHAT: SEND MESSAGE
    ═══════════════════════════════════════════════════════════════════════════ */
 async function sendMessage() {
   const text = textarea.value.trim();
   if (!text || isStreaming) return;
 
-  // Hide empty state
   const emptyState = document.getElementById('empty-state');
   if (emptyState) emptyState.remove();
 
-  // Reset input
   textarea.value = '';
   textarea.style.height = 'auto';
   setStreaming(true);
 
-  // Show user bubble
   appendMessage('user', text);
-
-  // Show typing indicator
   const typingId = appendTypingIndicator();
 
   try {
-    // Refresh Google token if it might be expiring
     if (!googleToken) throw new Error('Not signed in. Please sign in again.');
 
     const res = await fetch(`${WORKER_URL}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        message: text,
-        token: googleToken,
-        previousResponseId,
-      }),
+      body: JSON.stringify({ message: text, token: googleToken, previousResponseId }),
     });
 
     removeTypingIndicator(typingId);
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
-      // If 401, token expired — prompt re-login
       if (res.status === 401) {
         googleToken = null;
         showError(err.error + ' Redirecting to sign-in…');
@@ -571,7 +901,6 @@ async function sendMessage() {
       throw new Error(err.error || `Request failed (${res.status})`);
     }
 
-    // Parse the SSE stream
     const newResponseId = await streamResponse(res.body);
     if (newResponseId) previousResponseId = newResponseId;
 
@@ -584,17 +913,14 @@ async function sendMessage() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   SSE STREAM PARSER
-   Reads OpenAI Responses API server-sent events and streams text into a bubble.
+   CHAT: SSE STREAM PARSER
    ═══════════════════════════════════════════════════════════════════════════ */
 async function streamResponse(body) {
-  const reader  = body.getReader();
-  const decoder = new TextDecoder();
-  let buffer    = '';
+  const reader   = body.getReader();
+  const decoder  = new TextDecoder();
+  let buffer     = '';
   let responseId = null;
-
-  // Create an empty assistant bubble to stream into
-  const bubble = appendMessage('assistant', '');
+  const bubble   = appendMessage('assistant', '');
 
   try {
     while (true) {
@@ -603,7 +929,7 @@ async function streamResponse(body) {
 
       buffer += decoder.decode(value, { stream: true });
       const lines = buffer.split('\n');
-      buffer = lines.pop(); // Keep any partial line
+      buffer = lines.pop();
 
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
@@ -613,12 +939,7 @@ async function streamResponse(body) {
         let event;
         try { event = JSON.parse(raw); } catch { continue; }
 
-        // Capture the response ID for conversation continuity
-        if (event.type === 'response.created') {
-          responseId = event.response?.id ?? null;
-        }
-
-        // Append streamed text delta to the bubble
+        if (event.type === 'response.created') responseId = event.response?.id ?? null;
         if (event.type === 'response.output_text.delta' && event.delta) {
           bubble.textContent += event.delta;
           scrollToBottom();
@@ -637,7 +958,6 @@ async function streamResponse(body) {
    ═══════════════════════════════════════════════════════════════════════════ */
 function appendMessage(role, text) {
   const msgs = document.getElementById('messages');
-
   const wrapper = document.createElement('div');
   wrapper.className = `msg ${role}`;
 
@@ -652,21 +972,17 @@ function appendMessage(role, text) {
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   bubble.textContent = text;
-  // Allow basic whitespace formatting
-  bubble.style.whiteSpace = 'pre-wrap';
 
   wrapper.append(avatar, bubble);
   msgs.appendChild(wrapper);
   scrollToBottom();
-
-  return bubble; // return bubble so we can stream into it
+  return bubble;
 }
 
 let typingCounter = 0;
 function appendTypingIndicator() {
   const id = `typing-${++typingCounter}`;
   const msgs = document.getElementById('messages');
-
   const wrapper = document.createElement('div');
   wrapper.className = 'msg assistant';
   wrapper.id = id;
@@ -685,9 +1001,7 @@ function appendTypingIndicator() {
   return id;
 }
 
-function removeTypingIndicator(id) {
-  document.getElementById(id)?.remove();
-}
+function removeTypingIndicator(id) { document.getElementById(id)?.remove(); }
 
 function showError(message) {
   const msgs = document.getElementById('messages');
@@ -707,6 +1021,16 @@ function setStreaming(active) {
   isStreaming = active;
   sendBtn.disabled = active || textarea.value.trim() === '';
   textarea.disabled = active;
+}
+
+function buildEmptyState() {
+  const div = document.createElement('div');
+  div.id = 'empty-state';
+  div.innerHTML = `
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <p>How can I help you today?</p>
+    <span>Type a message below to get started.</span>`;
+  return div;
 }
 </script>
 </body>

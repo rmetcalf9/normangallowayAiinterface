@@ -12,6 +12,8 @@
  *   SYSTEM_PROMPT      — the assistant's system instructions
  */
 
+ const KV_KEY = 'openai_key';
+
 function corsHeaders(origin) {
   return {
     'Access-Control-Allow-Origin': origin,
@@ -56,6 +58,13 @@ async function verifyGoogleToken(idToken, expectedClientId) {
   }
 }
 
+/* ── Resolve the active OpenAI key ───────────────────────────────────────── */
+
+async function getOpenAIKey(env) {
+  const kvKey = await env.CHAT_KV.get(KV_KEY);
+  return kvKey || env.OPENAI_API_KEY || null;
+}
+
 async function handleChat(request, env, origin) {
   let body;
   try {
@@ -93,6 +102,10 @@ async function handleChat(request, env, origin) {
     );
   }
 
+  const apiKey = await getOpenAIKey(env);
+  if (!apiKey)
+    return jsonResponse({ error: 'No OpenAI API key configured. Ask your admin to set one.' }, 503, origin);
+
   // ── 3. Build OpenAI Responses API request ────────────────────────────────
   const openAIBody = {
     model: env.OPENAI_MODEL || 'gpt-4o',
@@ -112,7 +125,7 @@ async function handleChat(request, env, origin) {
     openAIRes = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
         'OpenAI-Beta': 'responses=v1',
       },
@@ -123,6 +136,8 @@ async function handleChat(request, env, origin) {
   }
 
   if (!openAIRes.ok) {
+    if (openAIRes.status === 401)
+      return jsonResponse({ error: 'OpenAI rejected the API key. The admin may need to update it.' }, 502, origin);
     const errText = await openAIRes.text();
     return jsonResponse({ error: `OpenAI error (${openAIRes.status}): ${errText}` }, 502, origin);
   }
@@ -138,26 +153,107 @@ async function handleChat(request, env, origin) {
     },
   });
 }
+/* ── Route: /api/admin/set-key ────────────────────────────────────────────── */
+
+async function handleAdminSetKey(request, env, origin) {
+  let body;
+  try { body = await request.json(); } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400, origin);
+  }
+
+  const { token, apiKey } = body;
+
+  if (!token) return jsonResponse({ error: 'Missing Google ID token' }, 401, origin);
+  if (!apiKey || !apiKey.startsWith('sk-'))
+    return jsonResponse({ error: 'Invalid API key — must start with sk-' }, 400, origin);
+
+  const tokenPayload = await verifyGoogleToken(token, env.GOOGLE_CLIENT_ID);
+  if (!tokenPayload)
+    return jsonResponse({ error: 'Invalid or expired Google token.' }, 401, origin);
+
+  const adminEmail = (env.ADMIN_EMAIL || '').trim().toLowerCase();
+  if (!adminEmail || tokenPayload.email.toLowerCase() !== adminEmail)
+    return jsonResponse({ error: 'Admin access only.' }, 403, origin);
+
+  try {
+    await env.CHAT_KV.put(KV_KEY, apiKey.trim());
+  } catch (err) {
+    return jsonResponse({ error: `Failed to save key: ${err.message}` }, 500, origin);
+  }
+
+  return jsonResponse({ success: true, message: 'API key updated successfully.' }, 200, origin);
+}
+
+/* ── Route: /api/admin/status ─────────────────────────────────────────────── */
+
+async function handleAdminStatus(request, env, origin) {
+  let body;
+  try { body = await request.json(); } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400, origin);
+  }
+
+  const { token } = body;
+  if (!token) return jsonResponse({ error: 'Missing Google ID token' }, 401, origin);
+
+  const tokenPayload = await verifyGoogleToken(token, env.GOOGLE_CLIENT_ID);
+  if (!tokenPayload)
+    return jsonResponse({ error: 'Invalid or expired Google token.' }, 401, origin);
+
+  const adminEmail = (env.ADMIN_EMAIL || '').trim().toLowerCase();
+  if (!adminEmail || tokenPayload.email.toLowerCase() !== adminEmail)
+    return jsonResponse({ error: 'Admin access only.' }, 403, origin);
+
+  const kvKey = await env.CHAT_KV.get(KV_KEY);
+
+  return jsonResponse({
+    kvKeySet: !!kvKey,
+    kvKeyPreview: kvKey ? `sk-...${kvKey.slice(-4)}` : null,
+    fallbackConfigured: !!env.OPENAI_API_KEY,
+  }, 200, origin);
+}
+
+/* ── Route: /api/admin/clear-key ─────────────────────────────────────────── */
+
+async function handleAdminClearKey(request, env, origin) {
+  let body;
+  try { body = await request.json(); } catch {
+    return jsonResponse({ error: 'Invalid JSON body' }, 400, origin);
+  }
+
+  const { token } = body;
+  if (!token) return jsonResponse({ error: 'Missing Google ID token' }, 401, origin);
+
+  const tokenPayload = await verifyGoogleToken(token, env.GOOGLE_CLIENT_ID);
+  if (!tokenPayload)
+    return jsonResponse({ error: 'Invalid or expired Google token.' }, 401, origin);
+
+  const adminEmail = (env.ADMIN_EMAIL || '').trim().toLowerCase();
+  if (!adminEmail || tokenPayload.email.toLowerCase() !== adminEmail)
+    return jsonResponse({ error: 'Admin access only.' }, 403, origin);
+
+  await env.CHAT_KV.delete(KV_KEY);
+  return jsonResponse({ success: true, message: 'KV key cleared. Falling back to default secret.' }, 200, origin);
+}
+
+/* ── Main fetch handler ───────────────────────────────────────────────────── */
 
 export default {
   async fetch(request, env) {
     const origin = env.ALLOWED_ORIGIN || '*';
     const requestOrigin = request.headers.get('Origin') || '';
 
-    // Block requests from unexpected origins (unless ALLOWED_ORIGIN is wildcard)
-    if (origin !== '*' && requestOrigin !== origin) {
+    if (origin !== '*' && requestOrigin !== origin)
       return new Response('Forbidden', { status: 403 });
-    }
 
-    // Handle CORS preflight
-    if (request.method === 'OPTIONS') {
+    if (request.method === 'OPTIONS')
       return new Response(null, { status: 204, headers: corsHeaders(origin) });
-    }
 
-    const url = new URL(request.url);
-
-    if (url.pathname === '/api/chat' && request.method === 'POST') {
-      return handleChat(request, env, origin);
+    if (request.method === 'POST') {
+      const path = new URL(request.url).pathname;
+      if (path === '/api/chat')            return handleChat(request, env, origin);
+      if (path === '/api/admin/set-key')   return handleAdminSetKey(request, env, origin);
+      if (path === '/api/admin/status')    return handleAdminStatus(request, env, origin);
+      if (path === '/api/admin/clear-key') return handleAdminClearKey(request, env, origin);
     }
 
     return new Response('Not found', { status: 404 });
